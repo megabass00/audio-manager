@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../css/jquery.flipster.min.css">
+  <link rel="stylesheet" href="../css/materialize.min.css">
+  <link rel="stylesheet" type="text/css" href="../css/material-icons.css">
+  <link rel="stylesheet" type="text/css" href="../css/jquery-ui.min.css">
+  <link rel="stylesheet" type="text/css" href="../css/jquery-ui.theme.min.css">
+  <link rel="stylesheet" href="../css/styles.css">
+  <meta charset="UTF-8">
+  <title>Select a value</title>
+  <style>
+    #content {
+      padding: 20px;
+    }
+    #label {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+    #value {
+      font-size: 40px;
+      font-weight: bold;
+      color: darkgreen;
+      margin-bottom: 5px;
+    }
+    #minValue, #maxValue {
+      color: darkgray;
+      font-size: 16px;
+      font-weight: bold;
+      min-width: 50px;
+    }
+    #slider {
+      padding: 0 10px;
+    }
+    #slider .ui-slider-handle {
+      background: #00b7c9;
+      font-size: 2em;
+      border-radius: 50%;
+      top: -.55em;
+      outline: none;
+    }
+    #slider.ui-slider-horizontal {
+      height: .3em;
+      border: none;
+      background: #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="content" class="container">
+    <div class="row center-align">
+      <div id="label" class="col s12">LABEL</div>
+    </div>
+    <div class="row center-align">
+      <div id="value" class="col s12">VALUE</div>
+    </div>
+    <div class="row valign-wrapper center-align">
+      <div id="minValue" class="col s1">MIN</div>
+      <div id="slider" class="col s10"></div>
+      <div id="maxValue" class="col s1">MAX</div>
+    </div>
+    <div class="row right-align">
+      <a class="waves-effect waves-light btn" onclick="response()">
+        <i class="material-icons left">check</i>Ok
+      </a>
+      <a class="waves-effect waves-light btn" onclick="cancel()">
+        <i class="material-icons left">cancel</i>Cancel
+      </a>
+    </div>
+    
+  </div>
+</body>
+
+<script>if (typeof module === 'object') window.module = module; module = undefined;</script>
+<script src="../js/libs/jquery-3.4.1.min.js"></script>
+<script src="../js/libs/jquery.flipster.min.js"></script>
+<script src="../js/libs/hammer.min.js"></script>
+<script src="../js/libs/materialize.min.js"></script>
+<script src="../js/libs/jquery-ui.min.js"></script>
+<script>if (window.module) module = window.module;</script>
+<script>
+  const { ipcRenderer } = require("electron");
+
+  function cancel() {
+    ipcRenderer.send('closeDialog', '')
+    this.close();
+  }
+
+  function response() {
+    const value = $('#slider').slider('option', 'value');
+    ipcRenderer.send('closeDialog', value)
+    this.close();
+  }
+
+  window.onload = () => {
+    const options = ipcRenderer.sendSync('openDialog', '')
+    const params = JSON.parse(options)
+    // console.log('PARAMS', params);
+    const { label, minValue, maxValue, defaultValue } = params;
+    $('#label').html(label);
+    $('#value').html(defaultValue);
+    $('#minValue').html(minValue);
+    $('#maxValue').html(maxValue);
+    $('#slider').slider({
+      min: minValue,
+      max: maxValue,
+      value: defaultValue,
+      change: (event, ui) => $('#value').html(ui.value)
+    });
+  }
+</script>
+
+</html>
+

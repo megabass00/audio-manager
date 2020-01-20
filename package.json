@@ -1,0 +1,33 @@
+{
+  "name": "audio-manager",
+  "version": "1.0.0",
+  "description": "Desktop app based in Electron to manage audio files. This tool can normalize, change volume, apply effects...",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron src/index.js",
+    "test": "echo 'testing'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/megabass00/audio-manager.git"
+  },
+  "keywords": [
+    "electron",
+    "manage",
+    "audio",
+    "files"
+  ],
+  "author": "megabass00",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/megabass00/audio-manager/issues"
+  },
+  "homepage": "https://github.com/megabass00/audio-manager#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "audio-file-modifier": "^1.0.1",
+    "electron": "^7.1.9",
+    "music-metadata": "^6.3.0",
+    "path": "^0.12.7"
+  }
+}

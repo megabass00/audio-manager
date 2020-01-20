@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="../css/jquery.flipster.min.css">
+  <link rel="stylesheet" href="../css/materialize.min.css">
+  <link rel="stylesheet" type="text/css" href="../css/material-icons.css">
+  <link rel="stylesheet" href="../css/styles.css">
+  <meta charset="UTF-8">
+  <title>Audio File Manager · megabass00</title>
+</head>
+
+<body>
+  <div class="container">
+    <!-- info panel -->
+    <div id="info" class="center-align card-panel z-depth-0 yellow lighten-1 valign-wrapper">
+      <i class="material-icons medium">music_note</i>
+      <span class="info-text">Please, firstly you need to select a music folder...</span>
+      <a id="btnSelectFolder" class="waves-effect waves-light btn">
+        <i class="material-icons left">file_upload</i>Select Folder
+      </a>
+    </div>
+
+    <!-- most used operations -->
+    <div class="row">
+      <p>Most used operations:</p>
+      <a data-type="1" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">all_out</i>Normalize</a>
+      <a data-type="2" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">volume_up</i>Change Volume</a>
+      <a data-type="3" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">content_cut</i>Split</a>
+      <a data-type="5" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">code</i>Fade in/out</a>
+      <!-- <a data-type="6" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">palette</i>Apply FX</a> -->
+      <a id="dropdown-btn" class='dropdown-trigger btn' href='#' data-target='dropdown-fx'>
+        <i class="material-icons left">palette</i>Apply FX
+      </a>
+      <ul id='dropdown-fx' class='dropdown-content'>
+        <li><a data-type="6" data-value="reverb">Reverb</a></li>
+        <li><a data-type="6" data-value="echo">Echo</a></li>
+        <li><a data-type="6" data-value="chorus">Chorus</a></li>
+        <li><a data-type="6" data-value="flanger">Flanger</a></li>
+        <li><a data-type="6" data-value="distort">Distort</a></li>
+        <li><a data-type="6" data-value="low-pass">Low Pass</a></li>
+        <li><a data-type="6" data-value="high-pass">High Pass</a></li>
+        <li><a data-type="6" data-value="bend-up">Bend Up</a></li>
+        <li><a data-type="6" data-value="bend-down">Bend Down</a></li>
+        <li><a data-type="6" data-value="reverse">Reverse</a></li>
+      </ul>
+    </div>
+
+    <!-- combo operations -->
+    <div class="row valign-wrapper">
+      <div class="col s9 input-field">
+        <select id="comboEffects">
+          <option value="" disabled selected>Select an operation...</option>
+          <option value="1">Normalize</option>
+          <option value="2">Change volume</option>
+          <option value="3">Split begin/end silences</option>
+          <option value="4">Pitch bend</option>
+          <option value="5">Fade in/out</option>
+          <option value="6">Apply FX</option>
+        </select>
+        <label>Avaible Operations</label>
+      </div>
+      <div class="col s3">
+        <a id="btnApplyEffect" class="waves-effect waves-light btn">Apply</a>
+      </div>
+    </div>
+
+    <!-- waveform -->
+    <div class="row waveform">
+      <div id="waveform"></div>
+      <div id="waveformProgress" class="progress" style="opacity: 0"><div class="indeterminate"></div></div>
+      <div id="waveformInfo" class="row left-align">0:00:00 / 0:00:00</div>
+    </div>
+
+    <!-- audio file list -->
+    <ul id="listFiles" class="collection with-header">
+      <!-- <li class="collection-header">
+        <div class="collection-header-info">
+          <h5>7 files in 'FolderName'</h5>
+          <a id="btnUnselectAll" class="waves-effect waves-light btn"><i class="material-icons left">select_all</i>Unselect All</a>
+        </div>
+      </li> -->
+      <li class="collection-header"><strong>Select a music folder please</strong></li>
+      <!-- <li class="collection-item valign-wrapper list-item">
+        <span class="list-item-info">
+          <span class="title">Prueba.mp3</span>
+          <br />
+          <small>C:/disco/folder/file.mp3</small>
+        </span>
+        <div class="list-actions">
+          <div class="preloader-wrapper small active list-item-preload" style="opacity: 1">
+            <div class="spinner-layer spinner-green-only">
+              <div class="circle-clipper left">
+                <div class="circle"></div>
+              </div><div class="gap-patch">
+                <div class="circle"></div>
+              </div><div class="circle-clipper right">
+                <div class="circle"></div>
+              </div>
+            </div>
+          </div>
+          <a class="corporative play-track" >
+            <i class="material-icons">play_arrow</i>
+          </a>
+          <div class="switch">
+            <label>
+              <input class="select-track" type="checkbox" checked >
+              <span class="lever"></span>
+            </label>
+          </div>
+        </div>
+      </li> -->
+    </ul>
+
+  </div>
+</body>
+
+<script>if (typeof module === 'object') window.module = module; module = undefined;</script>
+<script src="../js/libs/jquery-3.4.1.min.js"></script>
+<script src="../js/libs/jquery.flipster.min.js"></script>
+<script src="../js/libs/hammer.min.js"></script>
+<script src="../js/libs/materialize.min.js"></script>
+<script src="../js/libs/wavesurfer.js"></script>
+<script src="../js/main.js"></script>
+<script>if (window.module) module = window.module;</script>
+
+</html>
+
