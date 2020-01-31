@@ -2,10 +2,12 @@ const electron = require('electron');
 const { app, BrowserWindow, Menu, ipcMain } = electron;
 const path = require('path');
 const url = require('url');
-const { openFolder, showInfoDialog } = require('./utils/menuFunctions');
+const { openFolder, showInfoDialog, applyEffect } = require('./utils/menuFunctions');
 
-const APP_WIDTH = 500;
-const APP_HEIGHT = 1000;
+const APP_WIDTH = 900;
+const APP_HEIGHT = 500;
+const APP_RESIZABLE = true;
+const SHOW_DEVTOOLS = false;
 
 const isDev = !app.isPackaged;
 let mainWindow;
@@ -28,7 +30,7 @@ const createMainWindow = () => {
     // minHeight: 600,
     fullscreenWindowTitle: true,
     fullscreenable: true,
-    resizable: false,
+    resizable: APP_RESIZABLE,
     webPreferences: {
       nodeIntegration: true,
     }
@@ -40,14 +42,14 @@ const createMainWindow = () => {
     slashes: true
   }));
   mainWindow.maximize();
-  isDev && mainWindow.webContents.openDevTools();
+  isDev && SHOW_DEVTOOLS && mainWindow.webContents.openDevTools();
 
   // on close
   mainWindow.on('close', async e => {
     e.preventDefault();
     const result = await showInfoDialog(mainWindow, { 
       type: 'question',
-      buttons: ['&Yes','&No'],
+      buttons: ['Yes', 'No'],
       defaultId: 2,
       title: 'Multiple buttons on a message box',
       message: 'Do you really want to quit?',
@@ -100,7 +102,7 @@ const createModalWindow = (parent, callback, options) => {
     slashes: true
   }));
   modalWindow.once('ready-to-show', () => modalWindow.show());
-  // isDev && modalWindow.webContents.openDevTools();
+  // isDev && SHOW_DEVTOOLS && modalWindow.webContents.openDevTools();
 
   modalWindow.on('closed', () => {
     console.log('Closing modal window...');
@@ -213,33 +215,16 @@ ipcMain.on('showAlert', async (event, arg) => {
 
 // async
 ipcMain.handle('applyEffect', async (event, data) => {
-  const { effect, path } = data;
-  // {
-  //   effect: { name: 'normalize' },
-  //   file: {
-  //     metadata: {
-  //       common: [Object],
-  //       format: [Object],
-  //       native: {},
-  //       quality: [Object]
-  //     },
-  //     name: 'prueba3.mp3',
-  //     path: 'C:\\Users\\usuario\\Desktop\\TEST FILES bola\\prueba3.mp3'
-  //   }
-  // }
-  const randomTime = Math.floor(Math.random() * (8000 - 4000 + 1) + 3000);
-  await new Promise(resolve => setTimeout(resolve, randomTime));
+  // create progress function to send to renderer process
+  // it will send progress on custom index channel <progress + index>
+  data['onProgress'] = percent => event.sender.send('progress' + data.index, { percent, data });
+  await applyEffect(data);
+  
   return data;
 })
 // ipcMain.on('applyEffect', async (event, effect) => { // asynchronous-message
-//   console.log('effect', effect);
-//   // show confirmation
-//   await showInfoDialog(mainWindow, {
-//     type: 'info',
-//     message: 'FX was applied !!!',
-//     detail: `The ${effect.name.toLocaleUpperCase()}${effect.value ? ' whit value ' + effect.value : ''} effect was applied succesfully ;)`
-//   });
-//   event.reply('effectApplied', effect) // asynchronous-reply
+//   // ... async process ...
+//   event.reply('effectApplied', returnValue) // asynchronous-reply
 // })
 
 // modal events

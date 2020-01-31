@@ -5,6 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "electron src/index.js",
+    "reinstall": "rm -rf node_modules && rm -f package-lock.json && npm i",
+    "rebuild": "./node_modules/.bin/electron-rebuild",
     "test": "echo 'testing'"
   },
   "repository": {
@@ -25,8 +27,9 @@
   "homepage": "https://github.com/megabass00/audio-manager#readme",
   "dependencies": {},
   "devDependencies": {
-    "audio-file-modifier": "^1.0.1",
+    "audio-file-modifier": "git://github.com/megabass00/audio-file-modifier.git#develop",
     "electron": "^7.1.9",
+    "electron-rebuild": "^1.10.0",
     "music-metadata": "^6.3.0",
     "path": "^0.12.7"
   }

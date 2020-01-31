@@ -30,11 +30,12 @@ const resetFileList = placeholder => {
 }
 
 const getMetadataString = metadata => {
-  if (!metadata || !metadata.format) return 'No data avaible';
+  if (!metadata) return 'No data avaible';
   let metaStr = '';
-  metaStr += metadata.format.numberOfChannels && `${metadata.format.numberOfChannels > 1 ? 'Stereo · ' : 'Mono · '}`; 
-  metaStr += metadata.format.sampleRate && `${metadata.format.sampleRate} Hz · `; 
-  metaStr += metadata.format.bitrate && `${metadata.format.bitrate / 1000} kbps`;
+  metaStr += metadata.size ? `${metadata.size} · ` : ''; 
+  metaStr += metadata.numberOfChannels ? `${metadata.numberOfChannels > 1 ? 'Stereo · ' : 'Mono · '}` : ''; 
+  metaStr += metadata.sampleRate ? `${metadata.sampleRate} Hz · ` : ''; 
+  metaStr += metadata.bitrate ? `${metadata.bitrate / 1000} kbps` : '';
   return metaStr;
 }
 
@@ -83,26 +84,45 @@ const isPossibleApplyEffect = () => {
   return true;
 }
 
-const applyEffectInMainProcess = effect => {
+const applyEffect = effect => {
   if (isPossibleApplyEffect()) {
     wavesurfer.stop();
     let applied = 0;
     const links = getFilesSelectedFromList();
+    const indexes = [];
     for (let i=0; i<links.length; i++) {
       const link = links[i];
-      const preloader = link.find('.list-item-preload');
+      const preloader = link.find('.preload-wrapper');
+      const preloaderBar = preloader.find('.determinate');
+      const preloaderPercent = link.find('.list-item-preload-percent');
       preloader.css('opacity', 1);
       const index = link.data('index');
+      indexes.push(index);
       const file = folderSelected.files[parseInt(index)];
 
-      ipcRenderer.invoke('applyEffect', { index, effect, file, total: links.length })
+      // progress function to update UI on custom channel <progress + index>
+      const onProgress = (event, arg) => {
+        const { percent, data } = arg;
+        const roundedPercent = parseInt(percent);
+        preloaderBar.css('width', `${roundedPercent}%`);
+        preloaderPercent.html(`${roundedPercent}%`);
+      }
+      ipcRenderer.on('progress' + index, onProgress.bind(this));
+
+      // invoke to the applyEffect function on main process
+      ipcRenderer.invoke('applyEffect', { effect, file, index, total: links.length })
         .then(({ index, effect, file }) => {
-          // console.log('effectApplied', index, effect, file);
           applied++;
           preloader.css('opacity', 0);
-          console.log('applied == links.length', applied, links.length);
           
-          if (applied == links.length) {
+          // when all promises are resolved...
+          if (applied == links.length) { 
+            // remove all listeners for progress
+            for (let i=0; i<indexes.length; i++) { 
+              console.log('Removing listener', indexes[i]);
+              ipcRenderer.removeAllListeners('progress' + indexes[i]);
+            }
+            // show info message to user
             setTimeout(() => {
               ipcRenderer.sendSync('showAlert', {
                 type: 'info',
@@ -279,7 +299,8 @@ btnSelectFolder.click(e => {
   if (folder && folder.files.length > 0) {
     changeInfoPanelState(true);
     resetFileList(false);
-    const length = folder.files.length;
+    const filesOrdered = folder.files.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));  
+    const length = filesOrdered.length;
     const headerInfo = `
       <li class="collection-header">
         <div class="collection-header-info">
@@ -291,7 +312,7 @@ btnSelectFolder.click(e => {
     listFiles.append(headerInfo);
 
     for (let i=0; i<length; i++) {
-      const file = folder.files[i];
+      const file = filesOrdered[i];
       listFiles.append(`
         <li class="collection-item valign-wrapper list-item" data-index="${i}">
           <span class="list-item-info">
@@ -300,15 +321,10 @@ btnSelectFolder.click(e => {
             <small>${getMetadataString(file.metadata)}</small>
           </span>
           <div class="list-actions">
-            <div class="preloader-wrapper small active list-item-preload" style="opacity: 0">
-              <div class="spinner-layer spinner-green-only">
-                <div class="circle-clipper left">
-                  <div class="circle"></div>
-                </div><div class="gap-patch">
-                  <div class="circle"></div>
-                </div><div class="circle-clipper right">
-                  <div class="circle"></div>
-                </div>
+            <div class="preload-wrapper" style="opacity: 0">
+              <div class="list-item-preload-percent">1%</div>
+              <div class="progress list-item-preload">
+                <div class="determinate" style="width: 1%"></div>
               </div>
             </div>
             <a class="corporative play-track" data-state="paused">
@@ -360,9 +376,9 @@ $('#listFiles').on('click', '#btnUnselectAll', e => {
 $('#dropdown-fx li').click(e => {
   const $this = $(e.target);
   const type = $this.data('type');
-  const value = $this.data('value');
-  const effect = { name: 'apply-fx', value };
-  applyEffectInMainProcess(effect);
+  const fxName = $this.data('value');
+  const effect = { name: 'apply-fx', value: fxName.toLocaleUpperCase() };
+  applyEffect(effect);
 
   const effectName = $this.text();
   $('#dropdown-btn').html(`<i class="material-icons left">palette</i>${effectName}`);
@@ -380,13 +396,13 @@ btnApplyEffect.click(e => {
   }
 
   const effect = askForEffectValue(effectSelected);
-  applyEffectInMainProcess(effect);
+  applyEffect(effect);
 });
 
 btnDirectEffect.click(e => {
   const type = $(e.target).data('type');
   const effect = askForEffectValue(type);
-  applyEffectInMainProcess(effect);
+  applyEffect(effect);
 });
 
 
