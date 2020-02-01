@@ -1,5 +1,6 @@
 const electron = require('electron');
 const fs = require('fs');
+const path = require('path');
 const AudioFileModifier = require('audio-file-modifier');
 const afmOptions = {
   overwrite: true,
@@ -27,9 +28,16 @@ const openFolder = async app => {
   let audioFiles = [];
   for (let i=0; i<fileNames.length; i++) {
     const name = fileNames[i];
-    const path = `${folderPath}\\${name}`;
-    const metadata = await (new AudioFileModifier({ verbose: false })).getMetadata(path);
-    audioFiles.push({ name, path, metadata: metadata || {} });
+    const fullPath = path.join(folderPath, name);
+    let metadata;
+    try {
+      metadata = await (new AudioFileModifier({ verbose: false })).getMetadata(fullPath);
+    } catch(err) {
+      metadata = null;
+    } finally {
+      metadata = null;
+    }
+    audioFiles.push({ name, path: fullPath, metadata });
   }
   
   return {
