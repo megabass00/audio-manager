@@ -1,5 +1,6 @@
 const { ipcRenderer, remote } = require('electron');
 const fs = require('fs');
+const BetterQueue = require('better-queue');
 
 
 /**
@@ -15,10 +16,84 @@ const waveformProgress = $('#waveformProgress');
 const waveformInfo = $('#waveformInfo');
 const listFiles = $('#listFiles');
 
+const MAX_CONCURRENT_PROCESS = 5;
+
 let folderSelected;
 let wavesurfer;
 let tmrUpdateWaveformInfo;
 
+
+let applied = 0;
+const indexes = [];
+let numErrors = 0;
+const queue = new BetterQueue((process, done) => {
+  if (!typeof process == 'object') return;
+  const { link, file, effect, index, total } = process;
+  const preloader = link.find('.preload-wrapper');
+  const preloaderBar = preloader.find('.determinate');
+  const preloaderPercent = link.find('.list-item-preload-percent');
+  const errorBadge = link.find('.list-item-error');
+  preloader.show();
+  errorBadge.hide();
+  indexes.push(index);
+  
+  // progress function to update UI on custom channel <progress + index>
+  const onProgress = (event, arg) => {
+    const { percent, data } = arg;
+    const roundedPercent = parseInt(percent);
+    preloaderBar.css('width', `${roundedPercent}%`);
+    preloaderPercent.html(`${roundedPercent}%`);
+  }
+  ipcRenderer.on('progress' + index, onProgress.bind(this));
+
+  // invoke to the applyEffect function on main process
+  ipcRenderer.invoke('applyEffect', { effect, file, index, total })
+    .then((data) => {
+      const { index, effect, file, error } = data;
+      applied++;
+      preloader.hide();
+
+      // if there is some error...
+      if (error) {
+        preloader.hide();
+        errorBadge.show();
+        numErrors++;
+      }
+      
+      // when all promises are resolved...
+      if (applied == total) { 
+        // remove all listeners for progress
+        for (let i=0; i<indexes.length; i++) { 
+          ipcRenderer.removeAllListeners('progress' + indexes[i]);
+        }
+        // show info message to user
+        setTimeout(() => {
+          if (numErrors == total) {
+            ipcRenderer.sendSync('showAlert', {
+              type: 'error',
+              message: 'Error on all files',
+              detail: 'There may be a serious problem because none of the selected files could be processed' 
+            });
+          } else if (numErrors > 0) {
+            ipcRenderer.sendSync('showAlert', {
+              type: 'warning',
+              message: 'Error on some several files',
+              detail: `Some files was processed sucessfully but there was ${numErrors} errors` 
+            });
+          } else {
+            ipcRenderer.sendSync('showAlert', {
+              type: 'info',
+              message: 'FX was applied !!!',
+              detail: `The ${effect.name.toLocaleUpperCase()}${effect.value ? ' whit value ' + effect.value : ''} effect was applied succesfully ;)`
+            });
+          }
+        }, 100);
+      }
+
+      // ending task
+      done(null, error ? 'An error occurred' : 'File processed OK');
+    });
+}, { concurrent: MAX_CONCURRENT_PROCESS });
 
 
 /**
@@ -87,75 +162,14 @@ const isPossibleApplyEffect = () => {
 const applyEffect = effect => {
   if (isPossibleApplyEffect()) {
     wavesurfer.stop();
-    let applied = 0;
     const links = getFilesSelectedFromList();
-    const indexes = [];
     for (let i=0; i<links.length; i++) {
-      let numErrors = 0;
       const link = links[i];
-      const preloader = link.find('.preload-wrapper');
-      const preloaderBar = preloader.find('.determinate');
-      const preloaderPercent = link.find('.list-item-preload-percent');
-      const errorBadge = link.find('.list-item-error');
-      preloader.show();
-      errorBadge.hide();
       const index = link.data('index');
-      indexes.push(index);
       const file = folderSelected.files[parseInt(index)];
-
-      // progress function to update UI on custom channel <progress + index>
-      const onProgress = (event, arg) => {
-        const { percent, data } = arg;
-        const roundedPercent = parseInt(percent);
-        preloaderBar.css('width', `${roundedPercent}%`);
-        preloaderPercent.html(`${roundedPercent}%`);
-      }
-      ipcRenderer.on('progress' + index, onProgress.bind(this));
-
-      // invoke to the applyEffect function on main process
-      ipcRenderer.invoke('applyEffect', { effect, file, index, total: links.length })
-        .then(({ index, effect, file, error }) => {
-          applied++;
-          preloader.hide();
-
-          // if there is some error...
-          if (error) {
-            preloader.hide();
-            errorBadge.show();
-            numErrors++;
-          }
-          
-          // when all promises are resolved...
-          if (applied == links.length) { 
-            // remove all listeners for progress
-            for (let i=0; i<indexes.length; i++) { 
-              console.log('Removing listener', indexes[i]);
-              ipcRenderer.removeAllListeners('progress' + indexes[i]);
-            }
-            // show info message to user
-            setTimeout(() => {
-              if (numErrors == links.length) {
-                ipcRenderer.sendSync('showAlert', {
-                  type: 'error',
-                  message: 'Error on all files',
-                  detail: 'There may be a serious problem because none of the selected files could be processed' 
-                });
-              } else if (numErrors > 0) {
-                ipcRenderer.sendSync('showAlert', {
-                  type: 'warning',
-                  message: 'Error on some several files',
-                  detail: `Some files was processed sucessfully but there was ${numErrors} errors` 
-                });
-              } else {
-                ipcRenderer.sendSync('showAlert', {
-                  type: 'info',
-                  message: 'FX was applied !!!',
-                  detail: `The ${effect.name.toLocaleUpperCase()}${effect.value ? ' whit value ' + effect.value : ''} effect was applied succesfully ;)`
-                });
-              }
-            }, 100);
-          }
-        });
+      queue.push({ link, file, effect, index, total: links.length })
+        .on('finish', result => console.log(`File ${index} processed: ${result}`))
+        .on('failed', err => console.log('error', err));
     }
     // ipcRenderer.send('applyEffect', { name: effect.name, value: effect.value || null, files }); // asynchronous-message
     // ipcRenderer.on('effectApplied', (event, arg) => { // asynchronous-reply

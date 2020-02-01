@@ -28,6 +28,7 @@
   "dependencies": {},
   "devDependencies": {
     "audio-file-modifier": "git://github.com/megabass00/audio-file-modifier.git#develop",
+    "better-queue": "^3.8.10",
     "electron": "^7.1.9",
     "electron-rebuild": "^1.10.0",
     "music-metadata": "^6.3.0",

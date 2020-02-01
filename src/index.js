@@ -221,7 +221,7 @@ ipcMain.handle('applyEffect', async (event, data) => {
   // await applyEffect(data);
   // return data;
   return await applyEffect(data)
-    .then(res => res)
+    .then(res => data)
     .catch(error => ({ ...data, error }));
 })
 // ipcMain.on('applyEffect', async (event, effect) => { // asynchronous-message
