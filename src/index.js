@@ -4,10 +4,10 @@ const path = require('path');
 const url = require('url');
 const { openFolder, showInfoDialog, applyEffect } = require('./utils/menuFunctions');
 
-const APP_WIDTH = 900;
-const APP_HEIGHT = 500;
+const APP_WIDTH = 500;
+const APP_HEIGHT = 350;
 const APP_RESIZABLE = true;
-const SHOW_DEVTOOLS = false;
+const SHOW_DEVTOOLS = true;
 
 const isDev = !app.isPackaged;
 let mainWindow;
@@ -218,9 +218,11 @@ ipcMain.handle('applyEffect', async (event, data) => {
   // create progress function to send to renderer process
   // it will send progress on custom index channel <progress + index>
   data['onProgress'] = percent => event.sender.send('progress' + data.index, { percent, data });
-  await applyEffect(data);
-  
-  return data;
+  // await applyEffect(data);
+  // return data;
+  return await applyEffect(data)
+    .then(res => res)
+    .catch(error => ({ ...data, error }));
 })
 // ipcMain.on('applyEffect', async (event, effect) => { // asynchronous-message
 //   // ... async process ...

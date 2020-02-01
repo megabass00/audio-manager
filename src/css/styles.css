@@ -110,6 +110,20 @@ a.corporative {
 .list-item-preload > .spinner-layer {
   border-color: #31708f;
 }
+.list-item-error {
+  margin-right: 15px;
+  color: white;
+  background: #dd0000;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.list-item-error > i {
+  margin-right: 8px;
+  color: #ffbbbb;
+}
 
 /* SWITCHS */
 /* .switch label input[type=checkbox]:checked+.lever:after {

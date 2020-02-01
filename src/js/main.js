@@ -91,11 +91,14 @@ const applyEffect = effect => {
     const links = getFilesSelectedFromList();
     const indexes = [];
     for (let i=0; i<links.length; i++) {
+      let numErrors = 0;
       const link = links[i];
       const preloader = link.find('.preload-wrapper');
       const preloaderBar = preloader.find('.determinate');
       const preloaderPercent = link.find('.list-item-preload-percent');
-      preloader.css('opacity', 1);
+      const errorBadge = link.find('.list-item-error');
+      preloader.show();
+      errorBadge.hide();
       const index = link.data('index');
       indexes.push(index);
       const file = folderSelected.files[parseInt(index)];
@@ -111,9 +114,16 @@ const applyEffect = effect => {
 
       // invoke to the applyEffect function on main process
       ipcRenderer.invoke('applyEffect', { effect, file, index, total: links.length })
-        .then(({ index, effect, file }) => {
+        .then(({ index, effect, file, error }) => {
           applied++;
-          preloader.css('opacity', 0);
+          preloader.hide();
+
+          // if there is some error...
+          if (error) {
+            preloader.hide();
+            errorBadge.show();
+            numErrors++;
+          }
           
           // when all promises are resolved...
           if (applied == links.length) { 
@@ -124,11 +134,25 @@ const applyEffect = effect => {
             }
             // show info message to user
             setTimeout(() => {
-              ipcRenderer.sendSync('showAlert', {
-                type: 'info',
-                message: 'FX was applied !!!',
-                detail: `The ${effect.name.toLocaleUpperCase()}${effect.value ? ' whit value ' + effect.value : ''} effect was applied succesfully ;)`
-              });
+              if (numErrors == links.length) {
+                ipcRenderer.sendSync('showAlert', {
+                  type: 'error',
+                  message: 'Error on all files',
+                  detail: 'There may be a serious problem because none of the selected files could be processed' 
+                });
+              } else if (numErrors > 0) {
+                ipcRenderer.sendSync('showAlert', {
+                  type: 'warning',
+                  message: 'Error on some several files',
+                  detail: `Some files was processed sucessfully but there was ${numErrors} errors` 
+                });
+              } else {
+                ipcRenderer.sendSync('showAlert', {
+                  type: 'info',
+                  message: 'FX was applied !!!',
+                  detail: `The ${effect.name.toLocaleUpperCase()}${effect.value ? ' whit value ' + effect.value : ''} effect was applied succesfully ;)`
+                });
+              }
             }, 100);
           }
         });
@@ -321,7 +345,11 @@ btnSelectFolder.click(e => {
             <small>${getMetadataString(file.metadata)}</small>
           </span>
           <div class="list-actions">
-            <div class="preload-wrapper" style="opacity: 0">
+            <div class="list-item-error" style="display: none">
+              <i class="material-icons">error</i>
+              <span>Error</span>
+            </div>
+            <div class="preload-wrapper" style="display: none">
               <div class="list-item-preload-percent">1%</div>
               <div class="progress list-item-preload">
                 <div class="determinate" style="width: 1%"></div>
