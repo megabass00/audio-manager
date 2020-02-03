@@ -17,6 +17,11 @@
       font-size: 16px;
       margin: 5px 0;
     }
+    #btnMinus, #btnPlus {
+      font-size: 2em;
+      font-weight: bold;
+      background: lightgrey;
+    }
     #value {
       font-size: 40px;
       font-weight: bold;
@@ -53,7 +58,13 @@
       <div id="label" class="col s12">LABEL</div>
     </div>
     <div class="row center-align">
-      <div id="value" class="col s12">VALUE</div>
+      <div class="col s1 right-align">
+        <a id="btnMinus" class="btn-floating btn-large waves-effect waves-light" onclick="chageSliderValue('-')"><i class="material-icons">remove</i></a>
+      </div>
+      <div id="value" class="col s10">VALUE</div>
+      <div class="col s1 left-align">
+        <a id="btnPlus" class="btn-floating btn-large waves-effect waves-light" onclick="chageSliderValue('+')"><i class="material-icons">add</i></a>
+      </div>
     </div>
     <div class="row valign-wrapper center-align">
       <div id="minValue" class="col s1">MIN</div>
@@ -81,6 +92,7 @@
 <script>if (window.module) module = window.module;</script>
 <script>
   const { ipcRenderer } = require("electron");
+  let min, max;
 
   function cancel() {
     ipcRenderer.send('closeDialog', '')
@@ -88,16 +100,25 @@
   }
 
   function response() {
-    const value = $('#slider').slider('option', 'value');
+    const value = $('#slider').slider('value');
     ipcRenderer.send('closeDialog', value)
     this.close();
+  }
+
+  function chageSliderValue(operation) {
+    const slider = $('#slider');
+    const step = slider.slider('option', 'step');
+    const value = slider.slider('value');
+    if (operation == '-' && value > min) slider.slider('value', value - step);
+    if (operation == '+' && value < max) slider.slider('value', value + step);
   }
 
   window.onload = () => {
     const options = ipcRenderer.sendSync('openDialog', '')
     const params = JSON.parse(options)
-    // console.log('PARAMS', params);
-    const { label, minValue, maxValue, defaultValue } = params;
+    const { label, minValue, maxValue, step, defaultValue } = params;
+    min = minValue;
+    max = maxValue;
     $('#label').html(label);
     $('#value').html(defaultValue);
     $('#minValue').html(minValue);
@@ -105,6 +126,7 @@
     $('#slider').slider({
       min: minValue,
       max: maxValue,
+      step: step,
       value: defaultValue,
       change: (event, ui) => $('#value').html(ui.value)
     });

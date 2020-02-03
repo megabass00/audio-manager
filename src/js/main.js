@@ -193,6 +193,7 @@ const askForEffectValue = effectType => {
         label: 'You must select your desired value for apply volume',
         minValue: 1,
         maxValue: 120,
+        step: 1,
         defaultValue: 80
       }
       break;
@@ -208,6 +209,7 @@ const askForEffectValue = effectType => {
         label: 'You have to select a pitch amount',
         minValue: -120,
         maxValue: 120,
+        step: 1,
         defaultValue: 0
       }
       break;
@@ -219,6 +221,7 @@ const askForEffectValue = effectType => {
         label: 'You have to select a time to fade in/out (in milisecons)',
         minValue: 300,
         maxValue: 5000,
+        step: 50,
         defaultValue: 1000
       }
       break;
@@ -228,7 +231,7 @@ const askForEffectValue = effectType => {
      break;
 
     default:
-      throw new Error(`applyEffect: 'effectType' unknown (${effectType})`);
+      throw new Error(`'applyEffect': unknown effectType (${effectType})`);
   }
 
   if (options) {
@@ -239,6 +242,7 @@ const askForEffectValue = effectType => {
       label: options.label,
       minValue: options.minValue,
       maxValue: options.maxValue,
+      step: options.step,
       defaultValue: options.defaultValue
     });
   }

@@ -74,11 +74,11 @@ const createMainWindow = () => {
 
 const createModalWindow = (parent, callback, options) => {
   modalOptions = options;
-  const { width, height, title, minValue, maxValue } = options;
+  const { width, height, title, minValue, maxValue, step } = options;
   modalWindow = new BrowserWindow({
     title,
-    width, 
-    height, 
+    width,
+    height,
     parent,
     show: false,
     modal: true,
