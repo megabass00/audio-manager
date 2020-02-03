@@ -110,6 +110,13 @@ a.corporative {
 .list-item-preload > .spinner-layer {
   border-color: #31708f;
 }
+.list-item-done {
+  color: #2d9b2d;
+  margin-right: 15px;
+}
+.list-item-done > i {
+  font-size: 2em;
+}
 .list-item-error {
   margin-right: 15px;
   color: white;

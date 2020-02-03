@@ -32,8 +32,10 @@ const queue = new BetterQueue((process, done) => {
   const preloader = link.find('.preload-wrapper');
   const preloaderBar = preloader.find('.determinate');
   const preloaderPercent = link.find('.list-item-preload-percent');
+  const doneBadge = link.find('.list-item-done');
   const errorBadge = link.find('.list-item-error');
   preloader.show();
+  doneBadge.hide();
   errorBadge.hide();
   indexes.push(index);
   
@@ -55,9 +57,10 @@ const queue = new BetterQueue((process, done) => {
 
       // if there is some error...
       if (error) {
-        preloader.hide();
         errorBadge.show();
         numErrors++;
+      } else {
+        doneBadge.show();
       }
       
       // when all promises are resolved...
@@ -363,6 +366,9 @@ btnSelectFolder.click(e => {
             <small>${getMetadataString(file.metadata)}</small>
           </span>
           <div class="list-actions">
+            <div class="list-item-done" style="display: none;">
+              <i class="material-icons">done</i>
+            </div>
             <div class="list-item-error" style="display: none">
               <i class="material-icons">error</i>
               <span>Error</span>
