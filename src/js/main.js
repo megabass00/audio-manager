@@ -1,5 +1,6 @@
 const { ipcRenderer, remote } = require('electron');
 const fs = require('fs');
+const path = require('path');
 const BetterQueue = require('better-queue');
 
 
@@ -15,10 +16,12 @@ const comboEffects = $('#comboEffects');
 const waveformProgress = $('#waveformProgress');
 const waveformInfo = $('#waveformInfo');
 const listFiles = $('#listFiles');
+const btnSelectOutputFolder = $('#btnSelectOutputFolder');
 
 const MAX_CONCURRENT_PROCESS = 5;
 
 let folderSelected;
+let outputFolder;
 let wavesurfer;
 let tmrUpdateWaveformInfo;
 
@@ -69,6 +72,11 @@ const queue = new BetterQueue((process, done) => {
         for (let i=0; i<indexes.length; i++) { 
           ipcRenderer.removeAllListeners('progress' + indexes[i]);
         }
+
+        // reset preloads
+        $('.list-item-preload .determinate').css('width', 0);
+        $('.list-item-preload-percent').text('0%');
+
         // show info message to user
         setTimeout(() => {
           if (numErrors == total) {
@@ -124,6 +132,12 @@ const resetPlayButtons = sender => {
   });
 }
 
+const resetBadgesFromList = () => {
+  $('.list-item-done').hide();
+  $('.list-item-error').hide();
+  $('.preload-wrapper').hide();
+}
+
 const changeInfoPanelState = isFolderSelected => {
   if (isFolderSelected) {
     infoPanel.removeClass('yellow').addClass('green');
@@ -142,7 +156,7 @@ const getFilesSelectedFromList = () => {
 
 const isPossibleApplyEffect = () => {
   if (!folderSelected || !folderSelected.files || folderSelected.files.length == 0) {
-    const reply = ipcRenderer.sendSync('showAlert', {
+    ipcRenderer.sendSync('showAlert', {
       type: 'warning',
       message: 'There is not a music folder selected',
       detail: 'Please, first off you must select a music folder' 
@@ -162,17 +176,30 @@ const isPossibleApplyEffect = () => {
   return true;
 }
 
+const confirmOperation = numFiles => {
+  const reply = ipcRenderer.sendSync('showAlert', {
+    type: 'info',
+    message: `Are you sure you want process ${numFiles} files?`,
+    detail: 'You must be carefully, this operation is not reversible. If you confim it you can not come back again!',
+    buttons: ['Yes', 'Cancel']
+  });
+  return reply.response == 0 ? true : false;
+}
+
 const applyEffect = effect => {
+  resetBadgesFromList();
   if (isPossibleApplyEffect()) {
-    wavesurfer.stop();
     const links = getFilesSelectedFromList();
-    for (let i=0; i<links.length; i++) {
-      const link = links[i];
-      const index = link.data('index');
-      const file = folderSelected.files[parseInt(index)];
-      queue.push({ link, file, effect, index, total: links.length })
-        .on('finish', result => console.log(`File ${index} processed: ${result}`))
-        .on('failed', err => console.log('error', err));
+    if (confirmOperation(links.length)) {
+      wavesurfer.stop();
+      for (let i=0; i<links.length; i++) {
+        const link = links[i];
+        const index = link.data('index');
+        const file = folderSelected.files[parseInt(index)];
+        queue.push({ link, file, effect, index, total: links.length })
+          .on('finish', result => console.log(`File ${index} processed: ${result}`))
+          .on('failed', err => console.log('error', err));
+      }
     }
     // ipcRenderer.send('applyEffect', { name: effect.name, value: effect.value || null, files }); // asynchronous-message
     // ipcRenderer.on('effectApplied', (event, arg) => { // asynchronous-reply
@@ -325,13 +352,37 @@ const formattedTime = secs => {
   return hours + ':' + minutes + ':' + seconds;
 };
 
+const isValidObject = obj => {
+  return obj && Object.entries(obj).length > 0 && obj.constructor === Object;
+}
+
+const setOutputFolder = pathValue => {
+  outputFolder = pathValue;
+  let value = pathValue; 
+  if (pathValue.length > 25) {
+    const parse = path.parse(pathValue);
+    value = `${parse.root}...${path.sep + path.basename(pathValue) + path.sep}`;
+  }
+  $('#side-options .output-folder .value').text(value);
+}
+
+
 
 /**
  * Listeners
  */
+btnSelectOutputFolder.click(e => {
+  const folder = ipcRenderer.sendSync('btnSelectOutputFolder', '');
+  if (!folder) { 
+    console.log('User has cancel selection folder');
+    return;
+  }
+  setOutputFolder(folder);
+});
+
 btnSelectFolder.click(e => {
   const folder = ipcRenderer.sendSync('btnSelectFolderClick', '');
-  if (!folder) { 
+  if (!isValidObject(folder)) { 
     console.log('User has cancel selection folder');
     return;
   }
@@ -340,7 +391,9 @@ btnSelectFolder.click(e => {
   if (folderSelected && folderSelected.folder == folder.folder) return;
 
   folderSelected = folder;
+  setOutputFolder(folderSelected.folder);
   wavesurfer.empty();
+
   if (folder && folder.files.length > 0) {
     changeInfoPanelState(true);
     resetFileList(false);
@@ -399,14 +452,6 @@ btnSelectFolder.click(e => {
     console.warn('There are no audio files in folder selected');
   }
 });
-
-// $('#listFiles').on('click', '.play-track', e => {
-//   $this = $(e.target);
-//   const isPaused = $this.text() == 'play_circle_filled';
-//   if (isPaused) resetPlayButtons($this);
-//   $this.html(isPaused ? 'play_circle_outline' : 'play_circle_filled');
-//   // TODO: if is paused play this track
-// });
 
 $('#listFiles').on('change', '.select-track', e => {
   const isChecked = $(e.target).is(':checked');
@@ -471,6 +516,7 @@ ipcRenderer.on('folderSelected', (event, folder) => {
  * DOM Events
  */
 document.addEventListener('DOMContentLoaded', function() {
+  $('.sidenav').sidenav();
   $('select').formSelect();
   $('.dropdown-trigger').dropdown();
 

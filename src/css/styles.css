@@ -132,6 +132,56 @@ a.corporative {
   color: #ffbbbb;
 }
 
+/* SIDE OPTIONS */
+#side-options {}
+#side-options > li {
+  line-height: 35px;
+}
+#side-options .title {
+  height: 45px;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 20px;
+  background: darkgray;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#side-options div {
+  margin-left: 10px;
+}
+#side-options .title > i {
+  margin-right: 10px;
+}
+#side-options .label {
+  font-size: 18px;
+  margin-top: 10px;
+}
+#side-options .value {
+  font-size: 14px;
+  font-weight: bold;
+  color: darkgray;
+}
+#side-options .output-folder {
+  display: flex;
+  flex-direction: column;
+}
+#side-options .status {
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+}
+#btnSettings {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: black;
+}
+#btnSettings > i {
+  font-size: 2em;
+}
+
 /* SWITCHS */
 /* .switch label input[type=checkbox]:checked+.lever:after {
   background-color: #66BB6A !important;

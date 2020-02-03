@@ -2,7 +2,7 @@ const electron = require('electron');
 const { app, BrowserWindow, Menu, ipcMain } = electron;
 const path = require('path');
 const url = require('url');
-const { openFolder, showInfoDialog, applyEffect } = require('./utils/menuFunctions');
+const { openFolder, showInfoDialog, applyEffect, selectFolder } = require('./utils/menuFunctions');
 
 const APP_WIDTH = 500;
 const APP_HEIGHT = 350;
@@ -15,6 +15,7 @@ let modalWindow;
 let modalOptions
 let modalAnswer;
 let folderSelected;
+let outputFolder;
 
 const createMainWindow = () => {
   console.clear();
@@ -184,7 +185,7 @@ if (process.platform === 'darwin') {
 /**
  * Functions
  */
-async function selectFolder(event) {
+async function selectInputFolder(event) {
   const result = await openFolder(app);
   if (result && result.files.length > 0) {
     folderSelected = result;
@@ -201,16 +202,23 @@ async function selectFolder(event) {
  * Events
  */
 ipcMain.on('btnSelectFolderClick', (event, arg) => {
-  selectFolder(event);
+  selectInputFolder(event);
 })
 
 ipcMain.on('showAlert', async (event, arg) => {
   const result = await showInfoDialog(mainWindow, {
     type: arg.type || 'error',
     message: arg.message,
-    detail: arg.detail
+    detail: arg.detail,
+    buttons: arg.buttons
   });
   event.returnValue = result || 'dialogShowed';
+})
+
+// options panel
+ipcMain.on('btnSelectOutputFolder', async (event, arg) => {
+  outputFolder = await selectFolder(app, 'Choose an output folder');
+  event.returnValue = outputFolder;
 })
 
 // async
@@ -218,9 +226,7 @@ ipcMain.handle('applyEffect', async (event, data) => {
   // create progress function to send to renderer process
   // it will send progress on custom index channel <progress + index>
   data['onProgress'] = percent => event.sender.send('progress' + data.index, { percent, data });
-  // await applyEffect(data);
-  // return data;
-  return await applyEffect(data)
+  return await applyEffect({ ...data, outputFolder })
     .then(res => data)
     .catch(error => ({ ...data, error }));
 })

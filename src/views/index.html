@@ -10,6 +10,11 @@
 </head>
 
 <body>
+  <!-- open settings button -->
+  <a id="btnSettings" data-target="side-options" class="sidenav-trigger">
+    <i class="material-icons">settings</i>
+  </a>
+
   <div class="container">
     <!-- info panel -->
     <div id="info" class="center-align card-panel z-depth-0 yellow lighten-1 valign-wrapper">
@@ -19,6 +24,23 @@
         <i class="material-icons left">file_upload</i>Select Folder
       </a>
     </div>
+
+    <!-- side info -->
+    <ul id="side-options" class="sidenav">
+      <li class="title">
+        <i class="material-icons">settings</i>OPTIONS
+      </li>
+      <li class="status">
+        <div>In last operation 7 audio files was processed but there was 5 errors</div>
+      </li>
+      <li><div class="divider"></div></li>
+      <li class="output-folder">
+        <div class="label">Output folder:</div>
+        <div class="value">No folder selected</div>
+        <a id="btnSelectOutputFolder" class="waves-effect waves-light btn-small btn">Select folder</a>
+      </li>
+      <li><div class="divider"></div></li>
+    </ul>
 
     <!-- most used operations -->
     <div class="row">

@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const AudioFileModifier = require('audio-file-modifier');
 const afmOptions = {
-  overwrite: true,
   volume: 1.0,
   sampleRate: 44100,
   channels: 2,
@@ -15,15 +14,16 @@ const afmOptions = {
 const openFolder = async app => {
   // open dialog
   const result = await electron.dialog.showOpenDialog({
-    title: "Choose a folder with mp3 audio files",
-    buttonLabel: "Choose Folder",
-    defaultPath: app.getPath("desktop"),
-    properties: ["openDirectory"],
+    title: 'Choose a folder with mp3 audio files',
+    buttonLabel: 'Choose Folder',
+    defaultPath: app.getPath('desktop'),
+    properties: ['openDirectory'],
   });
   if (!result || result.canceled) return null;
 
   // find audio files on selected folder
   const folderPath = result.filePaths[0];
+  app.setPath('music', folderPath);
   const fileNames = fs.readdirSync(folderPath).filter(file => file.includes(".mp3"));
   let audioFiles = [];
   for (let i=0; i<fileNames.length; i++) {
@@ -66,13 +66,19 @@ const applyEffect = data => {
   //     name: 'prueba3.mp3',
   //     path: 'C:\\Users\\usuario\\Desktop\\TEST FILES bola\\prueba3.mp3'
   //   },
+  //   outputFolder: <output-folder-path> | null,
   //   index: 1 <index-of-file>,
   //   total: 4 <total-files-to-process>,
   //   onProgress: <progress-function>
   // }
-  const { effect, file, index, total, onProgress } = data;
-  const afm = new AudioFileModifier({ ...afmOptions, onProgress });
-  // if (onProgress) afm.config.onProgress = onProgress;
+  const { effect, file, outputFolder, onProgress } = data;
+  let outFile;
+  let overwrite = true;
+  if (outputFolder && path.dirname(file.path) != outputFolder) {
+    outFile = path.join(outputFolder, file.name);
+    overwrite = false;
+  }
+  const afm = new AudioFileModifier({ ...afmOptions, outFile, overwrite, onProgress });
   switch(effect.name) {
     case 'normalize':
       return afm.normalizeFile(file.path);
@@ -97,9 +103,26 @@ const applyEffect = data => {
   }
 }
 
+const selectFolder = async (app, title) => {
+  // open dialog
+  const result = await electron.dialog.showOpenDialog({
+    title: title || 'Choose a folder',
+    buttonLabel: 'Choose Folder',
+    defaultPath: app.getPath('music'),
+    properties: ['openDirectory'],
+  });
+  if (!result || result.canceled) return null;
+
+  // find audio files on selected folder
+  const folderPath = result.filePaths[0];
+  app.setPath('music', folderPath);
+  return folderPath;
+}
+
 
 module.exports = {
   openFolder,
   showInfoDialog,
-  applyEffect
+  applyEffect,
+  selectFolder
 }
