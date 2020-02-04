@@ -10,21 +10,22 @@ const APP_RESIZABLE = true;
 const SHOW_DEVTOOLS = true;
 
 const isDev = !app.isPackaged;
+const iconPath = path.join(__dirname, 'assets', 'icon.png');
 let mainWindow;
 let modalWindow;
 let modalOptions
 let modalAnswer;
 let folderSelected;
 let outputFolder;
+console.clear();
 
 const createMainWindow = () => {
-  console.clear();
   console.log(`Executing in ${isDev ? 'DEV' : 'PROD'} mode`);
   const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
   Menu.setApplicationMenu(mainMenu);
-
   mainWindow = new BrowserWindow({
     show: false,
+    icon: iconPath,
     width: APP_WIDTH,
     height: APP_HEIGHT,
     // minWidth: 500,
@@ -86,6 +87,7 @@ const createModalWindow = (parent, callback, options) => {
     alwaysOnTop : true, 
     autoHideMenuBar: true,
     resizable: false,
+    icon: iconPath,
     webPreferences: { 
       nodeIntegration:true,
       sandbox : false 
