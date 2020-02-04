@@ -155,7 +155,7 @@ a.corporative {
   margin-right: 10px;
 }
 #side-options .label {
-  font-size: 18px;
+  font-size: 20px;
   margin-top: 10px;
 }
 #side-options .value {
@@ -168,7 +168,6 @@ a.corporative {
   flex-direction: column;
 }
 #side-options .status {
-  font-weight: bold;
   display: flex;
   flex-direction: column;
 }

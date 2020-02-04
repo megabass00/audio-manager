@@ -65,6 +65,9 @@ const queue = new BetterQueue((process, done) => {
       } else {
         doneBadge.show();
       }
+
+      // update status
+      setOptionsStatus(`Operation in progress: ${applied}/${total} processed`);
       
       // when all promises are resolved...
       if (applied == total) { 
@@ -78,6 +81,7 @@ const queue = new BetterQueue((process, done) => {
         $('.list-item-preload-percent').text('0%');
 
         // show info message to user
+        setOptionsStatus(`In last operation ${total - numErrors}/${total} audio files was processed and there was ${numErrors} errors`);
         setTimeout(() => {
           if (numErrors == total) {
             ipcRenderer.sendSync('showAlert', {
@@ -190,15 +194,17 @@ const applyEffect = effect => {
   resetBadgesFromList();
   if (isPossibleApplyEffect()) {
     const links = getFilesSelectedFromList();
-    if (confirmOperation(links.length)) {
+    const totalFiles = links.length;
+    if (confirmOperation(totalFiles)) {
       wavesurfer.stop();
-      for (let i=0; i<links.length; i++) {
+      setOptionsStatus(`Operation in progress: 0/${totalFiles} processed`);
+      for (let i=0; i<totalFiles; i++) {
         const link = links[i];
         const index = link.data('index');
         const file = folderSelected.files[parseInt(index)];
         queue.push({ link, file, effect, index, total: links.length })
-          .on('finish', result => console.log(`File ${index} processed: ${result}`))
-          .on('failed', err => console.log('error', err));
+        .on('failed', err => console.log('error', err))
+        .on('finish', result => console.log(`File ${index} - ${file.name} processed: ${result}`))
       }
     }
     // ipcRenderer.send('applyEffect', { name: effect.name, value: effect.value || null, files }); // asynchronous-message
@@ -366,6 +372,10 @@ const setOutputFolder = pathValue => {
   $('#side-options .output-folder .value').text(value);
 }
 
+const setOptionsStatus = statusText => {
+  $('#side-options .status > div.value').text(statusText);
+} 
+
 
 
 /**
@@ -518,6 +528,7 @@ ipcRenderer.on('folderSelected', (event, folder) => {
 document.addEventListener('DOMContentLoaded', function() {
   $('.sidenav').sidenav();
   $('select').formSelect();
+  $('.tooltipped').tooltip();
   $('.dropdown-trigger').dropdown();
 
   wavesurfer = WaveSurfer.create({

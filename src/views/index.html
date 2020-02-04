@@ -11,27 +11,19 @@
 
 <body>
   <!-- open settings button -->
-  <a id="btnSettings" data-target="side-options" class="sidenav-trigger">
+  <a id="btnSettings" class="sidenav-trigger tooltipped" data-position="left" data-tooltip="Opens settings from left side" data-target="side-options">
     <i class="material-icons">settings</i>
   </a>
 
   <div class="container">
-    <!-- info panel -->
-    <div id="info" class="center-align card-panel z-depth-0 yellow lighten-1 valign-wrapper">
-      <i class="material-icons medium">music_note</i>
-      <span class="info-text">Please, firstly you need to select a music folder...</span>
-      <a id="btnSelectFolder" class="waves-effect waves-light btn">
-        <i class="material-icons left">file_upload</i>Select Folder
-      </a>
-    </div>
-
     <!-- side info -->
     <ul id="side-options" class="sidenav">
       <li class="title">
         <i class="material-icons">settings</i>OPTIONS
       </li>
       <li class="status">
-        <div>In last operation 7 audio files was processed but there was 5 errors</div>
+        <div class="label">Status info:</div>
+        <div class="value">Ready to process audio files</div>
       </li>
       <li><div class="divider"></div></li>
       <li class="output-folder">
@@ -41,16 +33,32 @@
       </li>
       <li><div class="divider"></div></li>
     </ul>
+    
+    <!-- info panel -->
+    <div id="info" class="center-align card-panel z-depth-0 yellow lighten-1 valign-wrapper">
+      <i class="material-icons medium">music_note</i>
+      <span class="info-text">Please, firstly you need to select a music folder...</span>
+      <a id="btnSelectFolder" class="waves-effect waves-light btn tooltipped" data-position="bottom" data-tooltip="Select a folder to preload audio files">
+        <i class="material-icons left">file_upload</i>Select Folder
+      </a>
+    </div>
 
     <!-- most used operations -->
     <div class="row">
       <p>Most used operations:</p>
-      <a data-type="1" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">all_out</i>Normalize</a>
-      <a data-type="2" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">volume_up</i>Change Volume</a>
-      <a data-type="3" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">content_cut</i>Split</a>
-      <a data-type="5" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">code</i>Fade in/out</a>
-      <!-- <a data-type="6" class="waves-effect waves-light btn btnDirect"><i class="material-icons left">palette</i>Apply FX</a> -->
-      <a id="dropdown-btn" class='dropdown-trigger btn' href='#' data-target='dropdown-fx'>
+      <a data-type="1" class="waves-effect waves-light btn btnDirect tooltipped" data-position="top" data-tooltip="Applies normalization to selected files on list">
+        <i class="material-icons left">all_out</i>Normalize
+      </a>
+      <a data-type="2" class="waves-effect waves-light btn btnDirect tooltipped" data-position="top" data-tooltip="It changes volume to selected files on list">
+        <i class="material-icons left">volume_up</i>Change Volume
+      </a>
+      <a data-type="3" class="waves-effect waves-light btn btnDirect tooltipped" data-position="top" data-tooltip="Removes silences at the beginning and end of selected tracks">
+        <i class="material-icons left">content_cut</i>Split
+      </a>
+      <a data-type="5" class="waves-effect waves-light btn btnDirect tooltipped" data-position="top" data-tooltip="Applies fade at begin and end of selected files">
+        <i class="material-icons left">code</i>Fade in/out
+      </a>
+      <a id="dropdown-btn" class='dropdown-trigger btn tooltipped' data-target='dropdown-fx' data-position="top" data-tooltip="Opens effect list on a dropdown where you can select one">
         <i class="material-icons left">palette</i>Apply FX
       </a>
       <ul id='dropdown-fx' class='dropdown-content'>
@@ -101,7 +109,7 @@
           <a id="btnUnselectAll" class="waves-effect waves-light btn"><i class="material-icons left">select_all</i>Unselect All</a>
         </div>
       </li> -->
-      <li class="collection-header"><strong>Select a music folder please</strong></li>
+      <li class="collection-header center-align"><strong>Select a music folder please</strong></li>
       <!-- <li class="collection-item valign-wrapper list-item">
         <span class="list-item-info">
           <span class="title">Prueba.mp3</span>
