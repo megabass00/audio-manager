@@ -2,6 +2,7 @@ const { ipcRenderer, remote } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const BetterQueue = require('better-queue');
+// const wsFunctions = require('../js/libs/wavesurfer.functions');
 
 
 /**
@@ -15,13 +16,21 @@ const btnDirectEffect = $('.btnDirect');
 const comboEffects = $('#comboEffects');
 const waveformProgress = $('#waveformProgress');
 const waveformInfo = $('#waveformInfo');
+const waveformInfoTime = waveformInfo.find('span:nth-child(1)');
+const waveformInfoTitle = waveformInfo.find('span:nth-child(2)');
+const waveformEQ = $('#waveformEQ');
 const listFiles = $('#listFiles');
 const btnSelectOutputFolder = $('#btnSelectOutputFolder');
+const btnSelectMicRecordingFolder = $('#btnSelectMicRecordingFolder');
+const pannerInput = $('#pannerInput');
+const zoomSlider = $('#zoomSlider');
 
 const MAX_CONCURRENT_PROCESS = 5;
+const ANIMATION_TIME = 'fast';
 
 let folderSelected;
 let outputFolder;
+let micRecordingFolder;
 let wavesurfer;
 let tmrUpdateWaveformInfo;
 
@@ -298,8 +307,9 @@ const generatePlaylist = () => {
     if (isPaused) {
       resetPlayButtons($icon);
       $icon.html('stop');
-      waveformProgress.css('opacity', 1);
+      waveformProgress.show();
       wavesurfer.load(paths[currentTrack]);
+      waveformInfoTitle.text(folderSelected.files[currentTrack].name);
     } else {
       $icon.html('play_arrow');
       wavesurfer.stop();
@@ -315,7 +325,7 @@ const generatePlaylist = () => {
 
   wavesurfer.on('ready', () => {
     wavesurfer.play();
-    waveformProgress.css('opacity', 0);
+    waveformProgress.hide();
   });
   wavesurfer.on('play', e => updateWaveformInfo());
   wavesurfer.on('pause', e => resetWaveformInfo());
@@ -331,13 +341,13 @@ const generatePlaylist = () => {
 const updateWaveformInfo = () => {
   const current = wavesurfer.getCurrentTime ? wavesurfer.getCurrentTime() : 0;
   const total = wavesurfer.getDuration ? wavesurfer.getDuration() : 0;
-  waveformInfo.text(`${formattedTime(current)} / ${formattedTime(total)}`);
+  waveformInfoTime.text(`${formattedTime(current)} / ${formattedTime(total)}`);
   tmrUpdateWaveformInfo = setTimeout(() => updateWaveformInfo(), 1000);
 }
 
 const resetWaveformInfo = () => {
   clearInterval(tmrUpdateWaveformInfo);
-  waveformInfo.text('0:00:00 / 0:00:00');
+  waveformInfoTime.text('0:00:00 / 0:00:00');
   tmrUpdateWaveformInfo = null;
 }
 
@@ -362,36 +372,32 @@ const isValidObject = obj => {
   return obj && Object.entries(obj).length > 0 && obj.constructor === Object;
 }
 
-const setOutputFolder = pathValue => {
-  outputFolder = pathValue;
+const parseFolderName = pathValue => {
   let value = pathValue; 
   if (pathValue.length > 25) {
     const parse = path.parse(pathValue);
     value = `${parse.root}...${path.sep + path.basename(pathValue) + path.sep}`;
   }
+  return value;
+}
+
+const setOutputFolder = pathValue => {
+  outputFolder = pathValue;
+  let value = parseFolderName(pathValue);
   $('#side-options .output-folder .value').text(value);
+}
+
+const setMicRecordingFolder = pathValue => {
+  micRecordingFolder = pathValue;
+  let value = parseFolderName(pathValue);
+  $('#side-options .record-mic .value').text(value);
 }
 
 const setOptionsStatus = statusText => {
   $('#side-options .status > div.value').text(statusText);
 } 
 
-
-
-/**
- * Listeners
- */
-btnSelectOutputFolder.click(e => {
-  const folder = ipcRenderer.sendSync('btnSelectOutputFolder', '');
-  if (!folder) { 
-    console.log('User has cancel selection folder');
-    return;
-  }
-  setOutputFolder(folder);
-});
-
-btnSelectFolder.click(e => {
-  const folder = ipcRenderer.sendSync('btnSelectFolderClick', '');
+const loadAudioFolder = folder => {
   if (!isValidObject(folder)) { 
     console.log('User has cancel selection folder');
     return;
@@ -461,6 +467,34 @@ btnSelectFolder.click(e => {
     resetFileList(true);
     console.warn('There are no audio files in folder selected');
   }
+}
+
+
+
+/**
+ * Listeners
+ */
+btnSelectOutputFolder.click(e => {
+  const folder = ipcRenderer.sendSync('btnSelectOutputFolder', '');
+  if (!folder) { 
+    console.log('User has cancel selection folder');
+    return;
+  }
+  setOutputFolder(folder);
+});
+
+btnSelectMicRecordingFolder.click(e => {
+  const folder = ipcRenderer.sendSync('btnSelectMicRecordingFolder', '');
+  if (!folder) { 
+    console.log('User has cancel selection folder');
+    return;
+  }
+  setMicRecordingFolder(folder);
+});
+
+btnSelectFolder.click(e => {
+  const folder = ipcRenderer.sendSync('btnSelectFolderClick', '');
+  loadAudioFolder(folder);
 });
 
 $('#listFiles').on('change', '.select-track', e => {
@@ -512,13 +546,69 @@ btnDirectEffect.click(e => {
   applyEffect(effect);
 });
 
+pannerInput.change(e => {
+  const value = e.target.value;
+  $('#pannerValue').text(value != 0 ? `${value}%` : 'center');
+  wavesurfer.panner.pan.value = Number(value);
+});
+
+pannerInput.dblclick(() => {
+  pannerInput.val(0);
+  wavesurfer.panner.pan.value = 0;
+  $('#pannerValue').text('center');
+});
+
+zoomSlider.change(e => {
+  wavesurfer.zoom(Number(e.target.value));
+});
+
+zoomSlider.dblclick(() => {
+  wavesurfer.zoom(0);
+  zoomSlider.val(0);
+});
+
+$('.btnZoom').click(e => {
+  const action = $(e.target).data('action') || $(e.target).parent().data('action');
+  let currentZoom = parseInt(zoomSlider.val());
+  if (action == 'zoomOut') currentZoom -= 10;
+  if (action == 'zoomIn') currentZoom += 10;
+  if (currentZoom < 0) currentZoom = 0;
+  if (currentZoom > 200) currentZoom = 200;
+  zoomSlider.val(currentZoom);
+  wavesurfer.zoom(currentZoom);
+});
+
+$('#player-option-eq').click(() => {
+  const eq = $('#waveformEQ');
+  const isChecked = $('#player-option-eq').prop('checked');
+  isChecked ? eq.show(ANIMATION_TIME) : eq.hide(ANIMATION_TIME);
+});
+
+$('#player-option-timeline').click(() => {
+  const timeline = $('#waveformTimeline');
+  const isChecked = $('#player-option-timeline').prop('checked');
+  isChecked ? timeline.show(ANIMATION_TIME) : timeline.hide(ANIMATION_TIME);
+});
+
+$('#player-option-zoom').click(() => {
+  const zoom = $('#waveformZoom');
+  const isChecked = $('#player-option-zoom').prop('checked');
+  isChecked ? zoom.show(ANIMATION_TIME) : zoom.hide(ANIMATION_TIME);
+});
+
 
 
 /**
  * Events
  */
 ipcRenderer.on('folderSelected', (event, folder) => {
-  console.log('Reveived folder', folder);
+  console.log('folderSelected', folder);
+  loadAudioFolder(folder);
+});
+
+ipcRenderer.on('showOptions', (event, arg) => {
+  const settingsPanel = M.Sidenav.getInstance(document.getElementById('side-options'));
+  settingsPanel.isOpen ? settingsPanel.close() : settingsPanel.open();
 });
 
 
@@ -531,14 +621,79 @@ document.addEventListener('DOMContentLoaded', function() {
   $('.tooltipped').tooltip();
   $('.dropdown-trigger').dropdown();
 
-  wavesurfer = WaveSurfer.create({
+  const wavesurferOptions = {
     container: '#waveform',
+    // backend: 'MediaElement',
     waveColor: '#428bca',
     progressColor: '#31708f',
     loaderColor: '#0000ff',
     cursorColor: 'navy',
     selectionColor: '#d0e9c6',
-    height: 100,
+    height: 60,
+    splitChannels: true,
     // barWidth: 3,
+    // barRadius: 3,
+    // barGap: 3,
+    plugins: [
+      WaveSurfer.cursor.create({
+        showTime: true,
+        opacity: 1,
+        customShowTimeStyle: {
+          'background-color': '#000',
+          color: '#fff',
+          padding: '2px',
+          'font-size': '10px'
+        }
+      }),
+      WaveSurfer.timeline.create({
+        container: '#waveformTimeline',
+        primaryColor: '#c3c3c3',
+        secondaryColor: '#dcdcdc',
+        primaryFontColor: '#a9a9a9',
+        secondaryFontColor: '#a9a9a9',
+      }) 
+    ]
+  };
+
+  wavesurfer = WaveSurfer.create(wavesurferOptions);
+  wavesurfer.panner = wavesurfer.backend.ac.createStereoPanner();
+  wavesurfer.backend.setFilter(wavesurfer.panner);
+
+  // init eq controls
+  const { EQ } = require('../utils/constants');
+  const eqFilters = EQ.map(band => {
+    const filter = wavesurfer.backend.ac.createBiquadFilter();
+    filter.type = band.type;
+    filter.gain.value = 0;
+    filter.Q.value = 1;
+    filter.frequency.value = band.f;
+    
+    const control = $(`
+      <div class="eqControlWrapper">
+        <span>${band.f}Hz</span>
+        <input class="eqControl" type="range" min="-50" max="50" title="${band.f}" orient="vertical" >
+        <span>0%</span>
+      </div>
+    `);
+
+    control.change(e => {
+      filter.gain.value = ~~e.target.value;
+      const value = e.target.value;
+      const valueContainer = $(e.target).parent().find('span:nth-child(3)');
+      const color = value > 0 ? 'green' : value == 0 ? 'darkgray' : 'red'; 
+      valueContainer.css('color', color);
+      valueContainer.text(`${value}%`);
+    });
+    control.dblclick(e => {
+      const valueContainer = $(e.target).parent().find('span:nth-child(3)');
+      valueContainer.css('color', 'darkgray');
+      valueContainer.text('0%');
+      $(e.target).val(0);
+    });
+
+    waveformEQ.append(control);
+    return filter;
   });
+
+  wavesurfer.backend.setFilters(eqFilters);
 });

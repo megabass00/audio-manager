@@ -2,7 +2,7 @@ const electron = require('electron');
 const { app, BrowserWindow, Menu, ipcMain } = electron;
 const path = require('path');
 const url = require('url');
-const { openFolder, showInfoDialog, applyEffect, selectFolder } = require('./utils/menuFunctions');
+const { openFolder, showInfoDialog, applyEffect, selectFolder } = require('./utils/functions');
 
 const APP_WIDTH = 500;
 const APP_HEIGHT = 350;
@@ -115,12 +115,12 @@ const createModalWindow = (parent, callback, options) => {
 
 const mainMenuTemplate = [
   {
-    label: 'Archivo',
+    label: 'File',
     submenu: [
       {
         label: 'Open folder',
         accelerator: process.platform === 'darwin' ? 'command+O' : 'Ctrl+O',
-        click: (e, focusedWindow) => selectFolder()
+        click: (e, focusedWindow) => selectInputAudioFolder()
       },
       {
         label: 'Exit',
@@ -136,6 +136,11 @@ const mainMenuTemplate = [
         label: 'Show Dev Tools',
         accelerator: process.platform === 'darwin' ? 'command+D' : 'Ctrl+D',
         click: (e, focusedWindow) => focusedWindow.toggleDevTools()
+      },
+      {
+        label: 'Show/Hide Settings',
+        accelerator: process.platform === 'darwin' ? 'commamd+S' : 'Ctrl+S',
+        click: (e, focusedWindow) => mainWindow.webContents.send('showOptions')
       },
       {
         label: 'Apply selected FX',
@@ -187,7 +192,7 @@ if (process.platform === 'darwin') {
 /**
  * Functions
  */
-async function selectInputFolder(event) {
+async function selectInputAudioFolder(event) {
   const result = await openFolder(app);
   if (result && result.files.length > 0) {
     folderSelected = result;
@@ -204,7 +209,7 @@ async function selectInputFolder(event) {
  * Events
  */
 ipcMain.on('btnSelectFolderClick', (event, arg) => {
-  selectInputFolder(event);
+  selectInputAudioFolder(event);
 })
 
 ipcMain.on('showAlert', async (event, arg) => {
@@ -220,6 +225,11 @@ ipcMain.on('showAlert', async (event, arg) => {
 // options panel
 ipcMain.on('btnSelectOutputFolder', async (event, arg) => {
   outputFolder = await selectFolder(app, 'Choose an output folder');
+  event.returnValue = outputFolder;
+})
+
+ipcMain.on('btnSelectMicRecordingFolder', async (event, arg) => {
+  outputFolder = await selectFolder(app, 'Choose an output folder to save mic recording');
   event.returnValue = outputFolder;
 })
 

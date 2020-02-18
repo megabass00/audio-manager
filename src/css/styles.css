@@ -25,12 +25,38 @@ a.corporative {
 .btn:hover {
   background-color: rgb(105, 105, 105);
 }
+.btn > i {
+  color: white !important;
+  font-size: 1.7em;
+}
+.btn-flat {
+  /* border: 1px solid black; */
+}
+.btn-flat:hover {
+  background-color: rgb(105, 105, 105);
+}
+.btnZoom i {
+  font-size: 2em;
+}
+#btnRecordMic {
+  background-color: #cc0000
+}
+#btnRecordMic:hover {
+  background-color: #fd4e4e
+}
+.dropdown-content li > a, .dropdown-content li > span {
+  color: #31708f;
+}
+.dropdown-content li > a:hover, .dropdown-content li > span:hover {
+  color: #70b1d1;
+}
 
 /* WAVEFORM */
 #waveform {
+  position: relative;
   border: 1px solid #e0e0e0;
   background-color: white;
-  min-height: 100px;
+  min-height: 120px;
   border-radius: 2px;
 }
 #waveformInfo {
@@ -38,6 +64,43 @@ a.corporative {
   margin-bottom: 15px;
   font-size: 11px;
   color: rgb(105, 105, 105);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+#waveformInfo > span {
+  width: 100%;
+}
+#waveformEQ {
+  display: flex;
+  width: 100%;
+  margin-bottom: 10px;
+}
+#waveformZoom {
+  width: 100%;
+}
+.eqControlWrapper {
+  display: flex;
+  flex-direction: column;
+}
+.eqControlWrapper > span {
+  text-align: center;
+}
+.eqControlWrapper > span:nth-child(1) {
+  font-size: 10px;
+  color: darkgray;
+}
+.eqControlWrapper > span:nth-child(3) {
+  font-size: 14px;
+  font-weight: bold;
+  color: darkgray;
+}
+.eqControl {
+  display: inline-block; 
+  writing-mode: bt-lr !important;
+  -webkit-appearance: slider-vertical !important;
+  height: 130px;
+  margin: 5px 0 !important;
 }
 
 /* PRELOAD */
@@ -149,7 +212,7 @@ a.corporative {
   justify-content: center;
 }
 #side-options div {
-  margin-left: 10px;
+  margin: 0 10px;
 }
 #side-options .title > i {
   margin-right: 10px;
@@ -162,6 +225,12 @@ a.corporative {
   font-size: 14px;
   font-weight: bold;
   color: darkgray;
+  display: flex;
+  flex-direction: column;
+}
+#side-options .info {
+  font-size: 12px;
+  margin-top: 10px;
 }
 #side-options .output-folder {
   display: flex;

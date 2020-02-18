@@ -31,7 +31,6 @@
     "better-queue": "^3.8.10",
     "electron": "^7.1.9",
     "electron-rebuild": "^1.10.0",
-    "music-metadata": "^6.3.0",
     "path": "^0.12.7"
   }
 }
