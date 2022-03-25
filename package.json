@@ -26,7 +26,7 @@
   "dependencies": {},
   "devDependencies": {
     "audio-file-modifier": "^1.0.1",
-    "electron": "^7.1.9",
+    "electron": "^13.6.6",
     "music-metadata": "^6.3.0",
     "path": "^0.12.7"
   }
